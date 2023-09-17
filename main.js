@@ -79,6 +79,7 @@ function mouseDownHandler(e) {
 
 function mouseUpHandler(e) {
     mouseDown = false;
+    mouseHold = false;
 }
 
 function mouseMoveHandler(e) {
