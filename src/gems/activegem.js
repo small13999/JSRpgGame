@@ -65,6 +65,7 @@ class ActiveGem {
     linkSupportGem(supportGem) {
         this.supportGems.push(supportGem)
         supportGem.apply(this);
+        supportGem.parentGem = this;
     }
 
 

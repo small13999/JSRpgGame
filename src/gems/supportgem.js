@@ -3,6 +3,7 @@ class SupportGem {
     constructor(applyFunction, applySkillEffectFunction = null) {
         this.applyFunction = applyFunction;
         this.applySkillEffectFunction = applySkillEffectFunction;
+        this.parentGem = null;
     }
 
     apply(gem) {
@@ -25,7 +26,24 @@ export class FasterProjectilesGem extends SupportGem {
 export class ReturningProjectilesGem extends SupportGem {
     constructor() {
         super(null, (skill) => {
-            if (skill.currentDistanceTraveled >= skill.maxDistanceTraveled/2) skill.direction = -1;
+            if (this.appliedProjs == undefined) {
+                this.appliedProjs = [];
+            }
+            if (skill.currentDistanceTraveled >= skill.maxDistanceTraveled/2 && !this.appliedProjs.find(elem => elem == skill)) {
+                let originPos = this.parentGem.getOriginEntityPos();
+                let vx = originPos.x - skill.x;
+                let vy = originPos.y - skill.y;
+                let dist = Math.sqrt(vx*vx + vy*vy);
+                skill.dx = vx/dist;
+                skill.dy = vy/dist;
+                skill.maxDistanceTraveled *= 1.5;
+                this.appliedProjs.push(skill);
+            }
+
+            if (skill.delete) {
+                const ind = this.appliedProjs.indexOf(skill);
+                if (ind > -1) this.appliedProjs.splice(ind, 1);
+            }
         });
     }
 }
