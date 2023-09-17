@@ -112,6 +112,19 @@ function keydown(e) {
         isRight = true;
     }
     if (e.key == "q") {
+        if (!mouseDown) {
+            let vy = mouseY - renderCanvas.height / 2;
+            let vx = mouseX - renderCanvas.width / 2* offsetRight / offsetLeft;
+
+            let dist = Math.sqrt(vx*vx + vy*vy);
+            let normX = vx/dist;
+            let normY = vy/dist;
+
+            player.dx = normX;
+            player.dy = normY;
+            console.log(normX, normY);
+        }
+
         let newProjs = player.primarySkill.use();
         newProjs.forEach(proj => {map.skills.push(proj)});
         if (!mouseHold) mouseHold = mouseDown;
