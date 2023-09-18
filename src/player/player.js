@@ -29,7 +29,6 @@ export class Player {
         for (let col = 0; col <12; col++) {
             for (let row = 0; row < 5; row++) {
                 if (this.inventory[row][col] != null) continue;
-                console.log(row, col);
 
                 let fits = true;
                 for (let x = col; x < col + item.width; x++) {
@@ -38,7 +37,6 @@ export class Player {
                             fits = false;
                             break;
                         }
-                        console.log(y, x);
                         if (this.inventory[y][x] != null) fits = false;
                     }
                 }
@@ -47,13 +45,39 @@ export class Player {
                     for (let x = col; x < col + item.width; x++) {
                         for (let y = row; y < row + item.height; y++) {
                             this.inventory[y][x] = item;
+                            item.invTopLeftX = col;
+                            item.invTopLeftY = row;
                         }
                     }
-                    console.log(this.inventory);
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    addItemAtPos(item, row, col) {
+        if (row < 0 || col < 0) return false;
+        let fits = true;
+        for (let x = col; x < col + item.width; x++) {
+            for (let y = row; y < row + item.height; y++) {
+                if (y >= 5 || x >= 12) {
+                    fits = false;
+                    break;
+                }
+                if (this.inventory[y][x] != null) fits = false;
+            }
+        }
+
+        if (fits) {
+            for (let x = col; x < col + item.width; x++) {
+                for (let y = row; y < row + item.height; y++) {
+                    this.inventory[y][x] = item;
+                    item.invTopLeftX = col;
+                    item.invTopLeftY = row;
+                }
+            }
+            return true;
+        }
     }
 }

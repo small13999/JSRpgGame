@@ -27,7 +27,12 @@ let offsetRight = activePanels.right ? 1-activePanels.right.width : 1;
 let offsetLeft = activePanels.left ? 1-activePanels.left.width : 1;
 
 let hoveredObject = null;
-let objectOnCursor = null;
+export let objectOnCursor = null;
+export function setObjectOnCursor(obj) {
+    objectOnCursor = obj;
+}
+const invSlotWidth = wrapperWidth*0.3/12;
+const invSlotHeight = wrapperHeight*0.3/5;
 
 const movingTo = {
     x: null,
@@ -57,13 +62,21 @@ function mouseDownHandler(e) {
     mouseDown = true;
     let clickedGuiElement = guiPanel.clickedElement(mouseX, mouseY);
     if (clickedGuiElement == guiPanel) {
-        let gamePos = canvasPosToGamePos(mouseX, mouseY)
-        movingTo.x = gamePos.x;
-        movingTo.y = gamePos.y;
+        //dropping item
+        if (objectOnCursor != null) {
+            objectOnCursor.x = player.x;
+            objectOnCursor.y = player.y;
+            map.items.push(objectOnCursor);
+            objectOnCursor = null;
+            mouseDown = false;
+        } else {
+            let gamePos = canvasPosToGamePos(mouseX, mouseY)
+            movingTo.x = gamePos.x;
+            movingTo.y = gamePos.y;
+            console.log("WUT??")
+        }
         mouseClickOnGui = false;
-        console.log(movingTo.x, movingTo.y);
     } else {
-        console.log("Shouldnt move!");
         mouseClickOnGui = true;
     }
     if (hoveredObject != null && objectOnCursor == null) {
@@ -242,6 +255,7 @@ function update() {
     updateSkills();
     drawItems();
     guiPanel.draw();
+    drawObjectOnCursor();
     requestAnimationFrame(update);
 }
 
@@ -280,7 +294,14 @@ fireball.linkSupportGem(fasterProj);
 fireball.linkSupportGem(returnProj);
 fireball.linkSupportGem(gmp);
 
-const gmpItem = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp);
+const gmppng = new Image();
+gmppng.src = "gmp.png";
+
+const gmpItem = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp, gmppng);
+const gmpItem1 = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp, gmppng);
+const gmpItem2 = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp, gmppng);
+const gmpItem3 = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp, gmppng);
+const gmpItem4 = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp, gmppng);
 
 const tileMap = new Map();
 tileMap.set(0, grass);
@@ -319,12 +340,10 @@ const map = {
 }
 
 map.items.push(gmpItem);
-map.items.push(gmpItem);
-map.items.push(gmpItem);
-map.items.push(gmpItem);
-map.items.push(gmpItem);
-map.items.push(gmpItem);
-map.items.push(gmpItem);
+map.items.push(gmpItem1);
+map.items.push(gmpItem2);
+map.items.push(gmpItem3);
+map.items.push(gmpItem4);
 
 
 map.mobs.push(orcMob);
@@ -463,6 +482,14 @@ function updateMouse() {
         }
     })
     if (!found) hoveredObject = null;
+}
+
+function drawObjectOnCursor() {
+
+    if (objectOnCursor != null) {
+        uiCtx.drawImage(objectOnCursor.icon, mouseX - objectOnCursor.width*invSlotWidth/2, mouseY - objectOnCursor.height*invSlotHeight/2,
+        objectOnCursor.width*invSlotWidth, objectOnCursor.height*invSlotHeight);
+    }
 }
 
 updateCamera();

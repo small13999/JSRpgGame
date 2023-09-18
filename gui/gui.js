@@ -1,6 +1,6 @@
 import { uiCtx, uiCanvas, wrapperWidth, wrapperHeight, renderCanvas } from "../main.js";
 import { activePanels } from "../main.js";
-import { player } from "../main.js";
+import { player, objectOnCursor, setObjectOnCursor } from "../main.js";
 const gmppng = new Image();
 gmppng.src = "gmp.png";
 
@@ -126,7 +126,50 @@ class InventorySlots extends Element {
                 }
             }
         }
+    }
+}
 
+class InventorySlot extends Element {
+    constructor(x, y, width, height, color, invCol, invRow, visible=false) {
+        super(x, y, width, height, color, visible);
+        this.invCol = invCol;
+        this.invRow = invRow;
+    }
+
+    clickedElement(mouseX, mouseY) {
+        let ret = super.clickedElement(mouseX, mouseY);
+        if (ret == this) {
+            if (player.inventory[this.invRow][this.invCol] != null) {
+                let item = player.inventory[this.invRow][this.invCol];
+                for (let x = item.invTopLeftX; x < item.invTopLeftX + item.width; x++) {
+                    for (let y = item.invTopLeftY; y < item.invTopLeftY + item.height; y++) {
+                        player.inventory[y][x] = null;
+
+                    }
+                }
+                setObjectOnCursor(item);
+            } else if (objectOnCursor != null) {
+                let ret = false;
+                let halfwayX = this.x * wrapperWidth + this.width*wrapperWidth/2;
+                let halfwayY = this.y * wrapperHeight + this.height*wrapperHeight/2;
+                if (mouseX < halfwayX && mouseY < halfwayY) {
+                    ret = player.addItemAtPos(objectOnCursor, this.invRow - 1, this.invCol - 1);
+                }
+                if (mouseX < halfwayX && mouseY > halfwayY) {
+                    ret = player.addItemAtPos(objectOnCursor, this.invRow, this.invCol - 1);
+                }
+                if (mouseX > halfwayX && mouseY < halfwayY) {
+                    ret = player.addItemAtPos(objectOnCursor, this.invRow - 1, this.invCol);
+                }
+                if (mouseX > halfwayX && mouseY > halfwayY) {
+                    ret = player.addItemAtPos(objectOnCursor, this.invRow, this.invCol);
+                }
+
+                if (ret) setObjectOnCursor(null);
+            }
+        }
+
+        return ret;
     }
 }
 const inventorySlots = new InventorySlots(0.7, 0.6, 0.3, 0.3, "grey", true);
@@ -134,7 +177,8 @@ inventoryPanel.addChild(inventorySlots);
 
 for (let i = 0; i<12; i++) {
     for (let j = 0; j<5; j++) {
-        const slot = new Element(0.7 + i/12*0.3, 0.6  + j/5*0.3, 0.3/12, 0.6/12, "rgba(0,0,0,0)", true);
-        inventorySlots.addChild(slot); 
+        const slot = new InventorySlot(0.7 + i/12*0.3, 0.6  + j/5*0.3, 0.3/12, 0.3/5, "rgba(0,0,0,0)", i, j, true);
+        inventorySlots.addChild(slot);
+        console.log(slot.width, slot.height);
     }
 }
