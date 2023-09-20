@@ -246,7 +246,15 @@ function renderRect(x, y, width, height, color) {
     renderCtx.fillRect(tX(rX) - ((renderCanvas.width/2 - tX(rX))*(camera.zoom-1)), tY(rY) - ((renderCanvas.height/2 - tY(rY))*(camera.zoom-1)), tWH(width*camera.zoom), tWH(height*camera.zoom));
 }
 
-function renderText(text, x, y) {
+function renderRectBorder(x, y, width, height, color) {
+    let rX = x - camera.x;
+    let rY = y - camera.y;
+    renderCtx.strokeStyle = color;
+    renderCtx.lineWidth = 1;
+    renderCtx.strokeRect(tX(rX) - ((renderCanvas.width/2 - tX(rX))*(camera.zoom-1)), tY(rY) - ((renderCanvas.height/2 - tY(rY))*(camera.zoom-1)), tWH(width*camera.zoom), tWH(height*camera.zoom));
+}
+
+function renderText(text, x, y, color="black", size=15) {
     let rX = x - camera.x;
     let rY = y - camera.y;
     renderCtx.textBaseline = "hanging";
@@ -488,9 +496,13 @@ function drawItems() {
         item.renderWidth = displaySize.width;
         item.renderHeight = displaySize.height;
         if (item == hoveredObject) {
-            renderRect(item.x, item.y, 250, 20, "blue");
+            renderRect(item.x, item.y, displaySize.width/z*heightFactor, displaySize.height/heightFactor, lightenHex(item.filter.backgroundColor));
+            renderText(item.text, item.x+ 10, item.y + 5, item.filter.textColor, fontSize);
+            renderRectBorder(item.x, item.y, displaySize.width/z*heightFactor, displaySize.height, item.filter.borderColor);
         } else {
-            renderRect(item.x, item.y, 250, 20, "grey");
+            renderRect(item.x, item.y, displaySize.width/z*heightFactor, displaySize.height, item.filter.backgroundColor);
+            renderText(item.text, item.x+ 10, item.y + 5, item.filter.textColor, fontSize);
+            renderRectBorder(item.x, item.y, displaySize.width/z*heightFactor, displaySize.height, item.filter.borderColor);
         }
     })
 }
@@ -519,4 +531,3 @@ function drawObjectOnCursor() {
 
 updateCamera();
 update();
-

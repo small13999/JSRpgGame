@@ -97,7 +97,9 @@ class InventorySlots extends Element {
         const bottomrightX = wrapperWidth;
         const bottomrightY = wrapperHeight * 0.9;
         uiCtx.fillStyle = "black";
+        uiCtx.strokeStyle = "black";
         for (let i = 0; i<13; i++) {
+
             uiCtx.beginPath();
             uiCtx.moveTo(topleftX + i/12 * wrapperWidth * 0.3, topleftY);
             uiCtx.lineTo(topleftX + i/12 * wrapperWidth * 0.3, bottomrightY)
