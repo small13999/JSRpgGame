@@ -26,10 +26,7 @@ export class FasterProjectilesGem extends SupportGem {
 export class ReturningProjectilesGem extends SupportGem {
     constructor() {
         super(null, (skill) => {
-            if (this.appliedProjs == undefined) {
-                this.appliedProjs = [];
-            }
-            if (skill.currentDistanceTraveled >= skill.maxDistanceTraveled/2 && !this.appliedProjs.find(elem => elem == skill)) {
+            if (skill.currentDistanceTraveled >= skill.maxDistanceTraveled/2 && !skill.returned) {
                 let originPos = this.parentGem.getOriginEntityPos();
                 let vx = originPos.x - skill.x;
                 let vy = originPos.y - skill.y;
@@ -37,12 +34,7 @@ export class ReturningProjectilesGem extends SupportGem {
                 skill.dx = vx/dist;
                 skill.dy = vy/dist;
                 skill.maxDistanceTraveled *= 1.5;
-                this.appliedProjs.push(skill);
-            }
-
-            if (skill.delete) {
-                const ind = this.appliedProjs.indexOf(skill);
-                if (ind > -1) this.appliedProjs.splice(ind, 1);
+                skill.returned = true;
             }
         });
     }

@@ -1,5 +1,7 @@
+import { defaultFilter } from "../itemfilter/itemfilter.js";
+
 export class Item {
-    constructor(text, x, y, width, height, itemObject, icon) {
+    constructor(text, x, y, width, height, itemObject, icon, filter=defaultFilter) {
         this.text = text;
         this.x = x;
         this.y = y;
@@ -9,5 +11,6 @@ export class Item {
         this.icon = icon;
         this.invTopLeftX = null;
         this.invTopLeftY = null;
+        this.filter = filter;
     }
 }

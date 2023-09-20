@@ -7,6 +7,7 @@ import { Element, toggleSkillGemsPanel } from './gui/gui.js';
 import { guiPanel, toggleInvetoryPanel } from './gui/gui.js';
 import { Item } from './src/items/item.js';
 import { pointRectCollision } from './src/util/collision.js';
+import { veryValuableFilter, gemFilter } from './src/itemfilter/itemfilter.js';
 
 export const renderCanvas = document.querySelector("#renderCanvas");
 const renderCtx = renderCanvas.getContext("2d");
@@ -73,7 +74,6 @@ function mouseDownHandler(e) {
             let gamePos = canvasPosToGamePos(mouseX, mouseY)
             movingTo.x = gamePos.x;
             movingTo.y = gamePos.y;
-            console.log("WUT??")
         }
         mouseClickOnGui = false;
     } else {
@@ -194,6 +194,21 @@ class Vector2 {
     }
 }
 
+function lightenHex(hexcode) {
+    let code = hexcode.slice(1);
+    let newCode = "#";
+    for (let i = 0; i<6; i++) {
+        if (isNaN(code[i])) {
+            newCode += code[i];
+        } else if (parseInt(code[i]) < 9) {
+            newCode += parseInt(code[i]) + 1;
+        } else {
+            newCode += 9;
+        }
+    }
+    return newCode;
+}
+
 function gamePosToCanvasPos(x, y) {
     let rX = x - camera.x;
     let rY = y - camera.y;
@@ -231,12 +246,20 @@ function renderRect(x, y, width, height, color) {
     renderCtx.fillRect(tX(rX) - ((renderCanvas.width/2 - tX(rX))*(camera.zoom-1)), tY(rY) - ((renderCanvas.height/2 - tY(rY))*(camera.zoom-1)), tWH(width*camera.zoom), tWH(height*camera.zoom));
 }
 
-function renderText(text, x, y) {
+function renderRectBorder(x, y, width, height, color) {
+    let rX = x - camera.x;
+    let rY = y - camera.y;
+    renderCtx.strokeStyle = color;
+    renderCtx.lineWidth = 1;
+    renderCtx.strokeRect(tX(rX) - ((renderCanvas.width/2 - tX(rX))*(camera.zoom-1)), tY(rY) - ((renderCanvas.height/2 - tY(rY))*(camera.zoom-1)), tWH(width*camera.zoom), tWH(height*camera.zoom));
+}
+
+function renderText(text, x, y, color="black", size=15) {
     let rX = x - camera.x;
     let rY = y - camera.y;
     renderCtx.textBaseline = "hanging";
-    renderCtx.fillStyle = "black";
-    renderCtx.font = 15 * camera.zoom + "px Arial";
+    renderCtx.fillStyle = color;
+    renderCtx.font = size * camera.zoom + "px Arial";
     renderCtx.fillText(text, tX(rX) - ((renderCanvas.width/2 - tX(rX))*(camera.zoom-1)), tY(rY) - ((renderCanvas.height/2 - tY(rY))*(camera.zoom-1)));
 }
 
@@ -297,11 +320,12 @@ fireball.linkSupportGem(gmp);
 const gmppng = new Image();
 gmppng.src = "gmp.png";
 
-const gmpItem = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp, gmppng);
-const gmpItem1 = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp, gmppng);
-const gmpItem2 = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp, gmppng);
-const gmpItem3 = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp, gmppng);
-const gmpItem4 = new Item("Greater Multiple Projectiles Support", 300, 200, 2, 2, gmp, gmppng);
+const gmpItem = new Item("Greater Multiple Projectiles Support", 300, 250, 2, 2, gmp, gmppng, gemFilter);
+const gmpItem1 = new Item("Greater Multiple Projectiles Support", 400, 350, 2, 2, gmp, gmppng, gemFilter);
+const gmpItem2 = new Item("Greater Multiple Projectiles Support", 500, 200, 2, 2, gmp, gmppng, gemFilter);
+const gmpItem3 = new Item("Greater Multiple Projectiles Support", 300, 300, 2, 2, gmp, gmppng, gemFilter);
+const gmpItem4 = new Item("Divine Orb", 300, 400, 2, 2, gmp, gmppng, veryValuableFilter);
+
 
 const tileMap = new Map();
 tileMap.set(0, grass);
@@ -462,21 +486,34 @@ function updateSkills() {
 }
 
 function drawItems() {
+    let z = camera.zoom;
+    let heightFactor = 960/wrapperHeight;
     map.items.forEach(item => {
+        let fontSize = item.filter.getFontSize();
+        renderText(item.text, item.x+ 10, item.y + 5, item.filter.textColor, fontSize);
+        let text = renderCtx.measureText(item.text);
+        let displaySize = item.filter.getDisplaySize(text.width);
+        item.renderWidth = displaySize.width;
+        item.renderHeight = displaySize.height;
         if (item == hoveredObject) {
-            renderRect(item.x, item.y, 250, 20, "blue");
+            renderRect(item.x, item.y, displaySize.width/z*heightFactor, displaySize.height, lightenHex(item.filter.backgroundColor));
+            renderText(item.text, item.x+ 10, item.y + 5, item.filter.textColor, fontSize);
+            renderRectBorder(item.x, item.y, displaySize.width/z*heightFactor, displaySize.height, item.filter.borderColor);
         } else {
-            renderRect(item.x, item.y, 250, 20, "grey");
+            renderRect(item.x, item.y, displaySize.width/z*heightFactor, displaySize.height, item.filter.backgroundColor);
+            renderText(item.text, item.x+ 10, item.y + 5, item.filter.textColor, fontSize);
+            renderRectBorder(item.x, item.y, displaySize.width/z*heightFactor, displaySize.height, item.filter.borderColor);
         }
-        renderText(item.text, item.x+ 10, item.y + 5);
     })
 }
 
 function updateMouse() {
     let found = false;
+    let z = camera.zoom;
     map.items.forEach(item => {
         const canvasPos = gamePosToCanvasPos(item.x, item.y);
-        if (!found && pointRectCollision({x: mouseX, y: mouseY}, {x: canvasPos.x, y: canvasPos.y, width: 250, height: 20})) {
+        //item.width here is already converted coords to world space
+        if (pointRectCollision({x: mouseX, y: mouseY}, {x: canvasPos.x, y: canvasPos.y, width: tWH(item.renderWidth), height: item.renderHeight*z})) {
             hoveredObject = item;
             found = true;
         }
