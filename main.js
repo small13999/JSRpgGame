@@ -9,6 +9,55 @@ import { Item } from './src/items/item.js';
 import { pointRectCollision } from './src/util/collision.js';
 import { veryValuableFilter, gemFilter } from './src/itemfilter/itemfilter.js';
 
+let PLAYER_ID = -1;
+
+// SOCKET
+//const PLAYER_ID = Math.floor(Math.random() * 10000);
+
+const socket = new WebSocket("ws://188.6.118.42:9001");
+
+socket.addEventListener("open", (event) => {
+    console.log("WebSocket connection opened:", event);
+});
+
+socket.addEventListener("message", (event) => {
+    let data = JSON.parse(event.data);
+    if (!isNaN(data)) {
+        PLAYER_ID = data;
+    } else {
+        let tmpArr = [];
+        let tmpArr2 = [];
+        data.players.forEach(player => {
+        tmpArr.push({
+            playerId: player[0],
+            playerPos: player[1],
+            });
+        })
+        data.skill_effects.forEach(effect => {
+            tmpArr2.push({
+                x: effect[0].x,
+                y: effect[0].y
+            })
+        })
+    map.otherPlayers = tmpArr;
+    map.otherSkills = tmpArr2;
+    }
+});
+
+socket.addEventListener("close", (event) => {
+    if (event.wasClean) {
+        console.log(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+    } else {
+        console.error("Connection abruptly closed");
+    }
+});
+
+socket.addEventListener("error", (error) => {
+    console.error("WebSocket error:", error);
+});
+
+//SOCKET
+
 export const renderCanvas = document.querySelector("#renderCanvas");
 const renderCtx = renderCanvas.getContext("2d");
 
@@ -74,6 +123,10 @@ function mouseDownHandler(e) {
             let gamePos = canvasPosToGamePos(mouseX, mouseY)
             movingTo.x = gamePos.x;
             movingTo.y = gamePos.y;
+            socket.send(JSON.stringify({
+                action: "MovePlayer",
+                args: [Math.round(gamePos.x), Math.round(gamePos.y)]
+            }));
         }
         mouseClickOnGui = false;
     } else {
@@ -103,6 +156,10 @@ function mouseMoveHandler(e) {
         let gamePos = canvasPosToGamePos(mouseX, mouseY)
         movingTo.x = gamePos.x;
         movingTo.y = gamePos.y;
+        socket.send(JSON.stringify({
+            action: "MovePlayer",
+            args: [Math.round(gamePos.x), Math.round(gamePos.y)]
+        }));
     }
 }
 
@@ -139,7 +196,11 @@ function keydown(e) {
         }
 
         let newProjs = player.primarySkill.use();
-        newProjs.forEach(proj => {map.skills.push(proj)});
+        //newProjs.forEach(proj => {map.skills.push(proj)});
+        socket.send(JSON.stringify({
+            action: "PlayerUseSkill",
+            args: [Math.round(player.x), Math.round(player.y), player.dx, player.dy]
+        }));
         if (!mouseHold) mouseHold = mouseDown;
         mouseDown = false;
         movingTo.x = null; movingTo.y = null;
@@ -361,6 +422,8 @@ const map = {
     items: [],
     graphics: [],
     skills: [],
+    otherPlayers: [],
+    otherSkills: [],
 }
 
 map.items.push(gmpItem);
@@ -408,6 +471,17 @@ function draw() {
         drawSprite(mob.img, mob.x, mob.y, 0, 0);
         renderRect(mob.x + number/6 - 4, mob.y - number/7 - 4, number/6*4 + 8, number/14 + 8, "#661d17");
         renderRect(mob.x + number/6, mob.y - number/7, number/6*4 * (mob.stats.currentHp / mob.stats.hp), number/14, "red");
+    })
+
+    map.otherPlayers.forEach(player => {
+        if (PLAYER_ID != player.playerId) {
+            drawArc(player.playerPos.x, player.playerPos.y, 20, "black");
+            renderText("Player " + player.playerId, player.playerPos.x - 40, player.playerPos.y - 50, 20, "black", 20);
+        }
+    })
+
+    map.otherSkills.forEach(skill => {
+        drawArc(skill.x, skill.y, 20, "red");
     })
 }
 
