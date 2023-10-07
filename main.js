@@ -14,7 +14,7 @@ let PLAYER_ID = -1;
 // SOCKET
 //const PLAYER_ID = Math.floor(Math.random() * 10000);
 
-const socket = new WebSocket("ws://188.6.118.42:9001");
+const socket = new WebSocket("wss://188.6.118.42:9001");
 
 socket.addEventListener("open", (event) => {
     console.log("WebSocket connection opened:", event);
